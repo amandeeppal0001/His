@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-// import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 
 
@@ -14,7 +14,7 @@ import InterviewSession from './models/InterviewSession.js';
 import userRoutes from './routes/userRoutes.js'; 
 import interviewRoutes from './routes/interviewRoutes.js'
 import { ApiError } from './utils/ApiError.js';
-// dotenv.config();/
+dotenv.config();
 
 connectDB();
 

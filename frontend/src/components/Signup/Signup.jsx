@@ -29,7 +29,7 @@ function Signup() {
 setLoading(true);
 setError(""); // Clear any previous errors
   try {
-    const response = await fetch("https://backend-for-interview-prep.onrender.com/api/users/register", {
+    const response = await fetch("http://localhost:5000/api/users/register", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
