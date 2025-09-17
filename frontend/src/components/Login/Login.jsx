@@ -25,7 +25,7 @@ const [loading,setLoading]= useState(false);
   e.preventDefault();
 setLoading(true);
   try {
-    const response = await fetch("https://backend-for-interview-prep.onrender.com/api/users/login", {
+    const response = await fetch("https://his-backend-gyjs.onrender.com/api/users/login", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -50,7 +50,7 @@ setLoading(true);
     console.error("Error logging in:", error);
   }
     finally{
-      setLoadding(false);
+      setLoading(false);
     }
 };
 

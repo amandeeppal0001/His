@@ -12,7 +12,7 @@ function Header() {
   const handleLogout = async () => {
     try {
       const response = await fetch(
-        "https://backend-for-interview-prep.onrender.com/api/users/logout",
+        "https://his-backend-gyjs.onrender.com/api/users/logout",
         {
           method: "POST",
           headers: {

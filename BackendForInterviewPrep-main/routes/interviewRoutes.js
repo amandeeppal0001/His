@@ -22,12 +22,17 @@ router.post('/start', async (req, res) => {
   // The user ID is available from the 'protect' middleware
   const userId = req.user._id; 
 
-  const prompt = ` Act as an expert interviewer for a ${role} position, specializing in ${domain}.
-      You are starting a ${interviewMode} interview.
-      Your tone should be professional, friendly, and encouraging.
-      Do not ask for introductions or any pleasantries.
-      Directly ask the very first interview question based on the role and interview mode.
-      Do not add any preamble like "Great, let's start." or "Here is your first question:". Just state the question directly.`; // your start prompt
+  const prompt = ` You are an expert career counselor for students who have just completed their ${session.role} studies (e.g., 10th or 12th grade), specializing in career guidance for the ${session.domain} field.
+  Your task is to present the user with a multiple-choice question to assess their interests, skills, or aptitude. The difficulty should be set to ${session.interviewMode}.
+  
+  You MUST provide your response as a valid JSON object with the following structure:
+  {
+    "question": "The question to ask the user.",
+    "options": ["Option A", "Option B", "Option C", "Option D"]
+  }
+  
+  Do not add any other text outside of the JSON object.
+`;
   const firstQuestionText = await main(prompt); // Replace with await callGemini(prompt);
 
   const newSession = new InterviewSession({
@@ -70,21 +75,22 @@ router.post('/evaluate', async (req, res) => {
     // const historyText = history.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
     const historyText = session.history.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
     const prompt = `
-      You are an expert interviewer for a ${session.role} position specializing in ${session.domain}, conducting a ${session.interviewMode} interview.
-      The entire interview history so far is:
-      ---
-      ${historyText}
-      ---
-      Your task is to evaluate the candidate's most recent answer and then ask the next question.
-      You MUST provide your response as a valid JSON object with the following structure:
-      {
-        "feedback": "A detailed, constructive critique of the candidate's last answer. Be specific about what was good and what could be improved. Use markdown for formatting.",
-        "score": A numerical score from 1 to 10 for the last answer, where 1 is poor and 10 is excellent.,
-        "nextQuestion": "The next logical interview question. The question should build upon the conversation if possible, or introduce a new relevant topic. Do not repeat questions."
-      }
-
-      Do not add any extra text or explanation outside of the JSON object.
-    `;
+  You are a career counselor continuing to assess a student based on their previous answers.
+  The entire session history so far is:
+  ---
+  ${historyText}
+  ---
+  The student just answered the last question. Based on their last answer, generate a new multiple-choice question to further gauge their aptitude for the ${session.domain} field.
+  
+  You MUST provide your response as a valid JSON object with the following structure:
+  {
+    "question": "The new question to ask.",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "feedback": "A brief, constructive comment on the student's last choice."
+  }
+  
+  Do not add any other text outside of the JSON object.
+`;
     
     const responseText = await main(prompt);
     // Clean the response to ensure it's valid JSON

@@ -54,16 +54,17 @@ function ChatPanel() {
   //   }
   // };
 
-const handleSendMessage = async () => {
+const handleSendMessage = async (selectedOption) => {
     if (input.trim() === '' || isLoading || !sessionId) return;
 
-    const userAnswer = input.trim();
+    const userAnswer = selectedOption;
+    // const userAnswer = input.trim();
     setMessages(prev => [...prev, { sender: 'user', text: userAnswer }]);
     setInput('');
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://backend-for-interview-prep.onrender.com/api/interviews/evaluate', {
+      const response = await fetch('https://his-backend-gyjs.onrender.com/api/interviews/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -115,7 +116,7 @@ const handleSendMessage = async () => {
 
     try {
         // Call the summary API endpoint with the current session ID
-        const response = await fetch('https://backend-for-interview-prep.onrender.com/api/interviews/summary', {
+        const response = await fetch('https://his-backend-gyjs.onrender.com/api/interviews/summary', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include', // Important for sending auth cookies
@@ -252,28 +253,52 @@ const handleSendMessage = async () => {
              
 
               {/* --- 2. MODIFICATION: Conditionally render feedback and score --- */}
-              {msg.sender === 'bot' && msg.feedback && (
+              {/* {msg.sender === 'bot' && msg.feedback && ( */}
+              {msg.sender === 'bot'  && (
                 <div className="mt-3 p-3 bg-white/60 rounded-md border border-gray-300">
-                  <h4 className="font-bold text-gray-800">Feedback:</h4>
-                  <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{msg.feedback}</p>
-                  <p className="font-bold text-gray-800 mt-3">
-                    Score: 
-                    <span className="text-purple-700 text-lg"> {msg.score} / 10</span>
-                  </p>
+                  <h4 className="font-bold text-gray-800">Career Bot:</h4>
+                  <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{msg.question}</p>
+                  {/* <p className="text-sm text-gray-700 mt-1 whitespace-pre-wrap">{msg.feedback}</p> */}
+                  {/* <p className="font-bold text-gray-800 mt-3">
+                    Score:  */}
+                    {/* <span className="text-purple-700 text-lg"> {msg.score} / 10</span> */}
+
+                  {/* </p> */}
+                  <div className="flex flex-col mt-4 space-y-2">
+            {msg.options.map((option, idx) => (
+              <button
+                key={idx}
+                onClick={() => handleSendMessage(option)} // Pass the selected option
+                className="p-3 rounded-md bg-white text-gray-800 border hover:bg-gray-200"
+              >
+                {option}
+              </button>
+            ))}
+          </div>
                 </div>
               )}
 
               {/* Add a separator if feedback was given */}
-              {msg.feedback && <hr className="my-3 border-gray-300" />}
+              {/* {msg.feedback && <hr className="my-3 border-gray-300" />} */}
 
               {/* The next question or initial message */}
               {/* <p className="mt-1 whitespace-pre-wrap">Question: </p> */}
-               <p className="font-bold">{msg.sender === 'user' ? 'You:' : 'AI Interviewer Question:'}</p>
+               {/* <p className="font-bold">{msg.sender === 'user' ? 'You:' : 'AI Interviewer Question:'}</p>
               <p className="mt-1 whitespace-pre-wrap">{msg.text}</p>
             </div>
           </div>
-        ))}
-        {isLoading && <div className="flex justify-start"><div className="p-4 rounded-lg bg-gray-100 text-gray-500">AI Interviewer is typing...</div></div>}
+        ))} */}
+         {/* Display user's answer */}
+      {msg.sender === 'user' && (
+        <div className="p-4 rounded-lg bg-purple-600 text-white">
+          <p className="font-semibold">You:</p>
+          <p className="mt-1">{msg.text}</p>
+        </div>
+      )}
+    </div>
+  ))}
+</div>
+        {/* {isLoading && <div className="flex justify-start"><div className="p-4 rounded-lg bg-gray-100 text-gray-500">AI Interviewer is typing...</div></div>} */}
       </div>
 
       {/* Input Area (remains the same) */}

@@ -44,7 +44,7 @@ function Select() {
   e.preventDefault();
 
   try {
-    const response = await fetch("https://backend-for-interview-prep.onrender.com/api/interviews/start", {
+    const response = await fetch("https://his-backend-gyjs.onrender.com/api/interviews/start", {
       method: "POST",
       headers: {
     "Content-Type": "application/json",
@@ -86,9 +86,45 @@ console.log("Selected Data:", formData);
           onSubmit={handleSubmit}
           className="w-full max-w-4xl" 
         >
-          <div className="flex flex-col md:flex-row gap-4 w-full">
-            <Dropdown
-              label="Job Role"
+          <div className="flex flex-col  gap-10 w-full">
+            <div className="flex flex-col form-group"> 
+            <label htmlFor="role" className="font-bold">Role</label>
+            <input
+            id="role"
+              type="text"
+              placeholder="Role (e.g., Software Engineer)"
+              value={formData.role}
+              onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            </div>
+           < div className="flex flex-col form-group"> 
+            <label htmlFor="domain" className="font-bold">Domain</label>
+            <input
+            id="domain"
+              type="text"
+              placeholder="Domain (e.g., Web Development)"
+              value={formData.domain}
+              onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            </div>
+           <div className="flex flex-col form-group">
+            <label htmlFor="interviewMode" className="font-bold">Mode</label>
+            <input
+            id="interviewMode"
+              type="text"
+              placeholder=" Mode (e.g., easy, medium, hard)"
+              value={formData.interviewMode}
+              onChange={(e) => setFormData({ ...formData, interviewMode: e.target.value })}
+              className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              required
+            />
+            </div>
+            {/* <Dropdown
+              label="Role"
               options={roles}
               value={formData.role}
               onChange={(value) => setFormData({ ...formData, role: value })}
@@ -104,7 +140,7 @@ console.log("Selected Data:", formData);
               options={interviewModes}
               value={formData.interviewMode}
               onChange={(value) => setFormData({ ...formData, interviewMode: value })}
-            />      
+            />       */}
           </div>
 
           <div className="flex justify-center mt-6">

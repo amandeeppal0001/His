@@ -1,1 +1,23 @@
 @import 'tailwindcss';
+
+.form-group {
+  display: flex;
+  flex-direction: column; /* Stacks the label and input vertically */
+  margin-bottom: 1.5rem;  /* Adds space between form groups */
+}
+
+.label-bold-top {
+  font-weight: 700;    /* Makes the text bold */
+  font-size: 1.25rem;  /* Increases font size for prominence */
+  color: #000;         /* Ensures the color is dark */
+  margin-bottom: 0.5rem; /* Adds space between the label and the input */
+}
+
+.input-big {
+  height: 48px;        /* Increases the vertical size of the input box */
+  font-size: 1rem;     /* Makes the text inside the input larger */
+  padding: 0 12px;     /* Adds a bit more horizontal padding for visual balance */
+  border: 1px solid #ccc; /* A standard border for a cleaner look */
+  border-radius: 4px; 
+  width: 200px; /* Adds slightly rounded corners */
+}
