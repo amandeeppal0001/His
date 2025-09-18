@@ -14,23 +14,23 @@ function Select() {
 
   const navigate = useNavigate();
 
-  const roles = [
-    "Software Engineer",
-    "Data Scientist",
-    "DevOps Engineer",
-    "Full Stack Developer",
-    "AI/ML Engineer",
-  ];
+  // const roles = [
+  //   "Software Engineer",
+  //   "Data Scientist",
+  //   "DevOps Engineer",
+  //   "Full Stack Developer",
+  //   "AI/ML Engineer",
+  // ];
 
-  const domains = [
-    "Web Development",
-    "Data Science",
-    "Artificial Intelligence",
-    "Machine Learning",
-    "Cloud Computing",
-  ];
+  // const domains = [
+  //   "Web Development",
+  //   "Data Science",
+  //   "Artificial Intelligence",
+  //   "Machine Learning",
+  //   "Cloud Computing",
+  // ];
 
-  const interviewModes = ["Technical", "Behavioral"];
+  // const interviewModes = ["Technical", "Behavioral"];
 
   // const handleSubmit = (e) => {
   //   e.preventDefault();
@@ -54,7 +54,7 @@ function Select() {
     });
 
     if (!response.ok) {
-      throw new Error("Login failed");
+      throw new Error(" starting of test failed");
     }
 const interviewData = await response.json();
       //  console.log("Server response:", data);

@@ -22,8 +22,8 @@ router.post('/start', async (req, res) => {
   // The user ID is available from the 'protect' middleware
   const userId = req.user._id; 
 
-  const prompt = ` You are an expert career counselor for students who have just completed their ${session.role} studies (e.g., 10th or 12th grade), specializing in career guidance for the ${session.domain} field.
-  Your task is to present the user with a multiple-choice question to assess their interests, skills, or aptitude. The difficulty should be set to ${session.interviewMode}.
+  const prompt = ` You are an expert career counselor for students who have just completed their ${role} studies (e.g., 10th or 12th grade), specializing in career guidance for the ${domain} field.
+  Your task is to present the user with a multiple-choice question to assess their interests, skills, or aptitude. The difficulty should be set to ${interviewMode}.
   
   You MUST provide your response as a valid JSON object with the following structure:
   {
