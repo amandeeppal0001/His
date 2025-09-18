@@ -6,7 +6,7 @@ import { Loader2 } from "lucide-react";
 
 function Login() {
   const [formData, setFormData] = useState({ email: "", password: "" });
-  // 2. Initialize the navigate function
+  // 2. Initialize the navigate function,
   const navigate = useNavigate(); 
 const [loading,setLoading]= useState(false);
   const handleChange = (e) => {

@@ -78,7 +78,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 
-// --- Google Generative AI Initialization ---
+// --- Google Generative AI Initialization ---,,
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY is not defined in the .env file.");
 }
