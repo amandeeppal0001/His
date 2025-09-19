@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import express from 'express';
 import verifyJWT from '../middleware/authMiddleware.js';
 import InterviewSession from '../models/InterviewSession.js';
@@ -17,11 +18,13 @@ router.use(verifyJWT);
  */
 router.post('/start', async (req, res) => {
     try {
-  const { role, domain, interviewMode } = req.body;
+  const { role, domain, interviewMode,location } = req.body;
   
   // The user ID is available from the 'protect' middleware
   const userId = req.user._id; 
-
+// role == class or completed education
+// domain == field of interest in which they want to pursue career
+// interviewMode == easy, medium, hard
   const prompt = ` You are an expert career counselor for students who have just completed their ${role} studies (e.g., 10th or 12th grade), specializing in career guidance for the ${domain} field.
   Your task is to present the user with a multiple-choice question to assess their interests, skills, or aptitude. The difficulty should be set to ${interviewMode}.
   
@@ -40,12 +43,13 @@ router.post('/start', async (req, res) => {
     role,
     domain,
     interviewMode,
+    location,
     history: [{ sender: 'ai', text: firstQuestionText }]
   });
   await newSession.save();
 
   res.json({ 
-    question: firstQuestionText, sessionId: newSession._id
+    question: firstQuestionText, sessionId: newSession._id, location: newSession.location
  });
  } catch (error) {
     console.error('Error in /api/interviews/start:', error);
@@ -64,6 +68,9 @@ router.post('/evaluate', async (req, res) => {
     // const { history, role, domain, interviewMode } = req.body;
      const { sessionId, userAnswer } = req.body;
      // Find the current interview session
+     if (!mongoose.Types.ObjectId.isValid(sessionId)) {
+      return res.status(400).json({ error: 'Invalid sessionId format' });
+    }
     const session = await InterviewSession.findById(sessionId);
     if (!session) {
         return res.status(404).json({ error: 'Interview session not found.' });
@@ -97,9 +104,10 @@ router.post('/evaluate', async (req, res) => {
     const cleanedJsonString = responseText.replace(/```json\n|```/g, '').trim();
     const result = JSON.parse(cleanedJsonString);
     // Add the AI's next question to the history
-    session.history.push({ sender: 'ai', text: result.nextQuestion });
-    await session.save(); // Save the updated session
-
+    // session.history.push({ sender: 'ai', text: result.nextQuestion });
+    // await session.save(); // Save the updated session
+    session.history.push({ sender: 'ai', text: result.question });
+    await session.save();
     res.json(result);
 
 
@@ -121,7 +129,7 @@ router.post('/evaluate', async (req, res) => {
 router.post('/summary', async (req, res) => {
     try {
         // const { history, role } = req.body;
-          const { sessionId } = req.body;
+          const { sessionId,location } = req.body;
            // Fetch the complete history from the database
         const session = await InterviewSession.findById(sessionId);
         if (!session) {
@@ -132,8 +140,8 @@ router.post('/summary', async (req, res) => {
         // const historyText = history.map(msg => `${msg.sender}: ${msg.text}`).join('\n');
 
         const prompt = `
-            You are an expert career coach providing a final summary for a mock interview.
-            The candidate was interviewing for a ${session.role} position.
+            You are an expert career coach providing a final career to choose based on mock interview.
+            The candidate completed his  ${session.role} .
             Here is the complete transcript of the interview:
             ---
             ${historyText}
@@ -142,10 +150,11 @@ router.post('/summary', async (req, res) => {
             The report should be encouraging and constructive.
             You MUST provide your response as a valid JSON object with the following structure:
             {
-              "overallScore": An average score out of 10 for the entire interview performance.,
-              "strengths": "A paragraph highlighting the candidate's key strengths, with specific examples from the interview.",
-              "areasForImprovement": "A paragraph detailing the areas where the candidate can improve, offering actionable advice.",
-              "suggestedResources": "A list of 3-5 bullet points with suggested resources (like articles, courses, or topics to study) to help the candidate improve."
+              "course names ": " suggest 3-5 course names for the specific choosed career based on candidate quiz and interest.",
+              "career scope": provide career sc"opes for the specific choosed career.,
+              "jobs in related career": "A paragraph highlighting the jobs which a candidate will get after persuing that career.",
+              "suggestedColleges": "suggest best colleges around 5-7 near candidates location ${location} , give most preference to government colleges."
+              "suggestedCollegesSelectionCriteria": "suggest selection criteria for the above suggested colleges. & make sure that never add "Always check the official website of each college for the most current and detailed admission criteria and application processes." or similar meaning sentences in the response. Note that if student selected that it completes 10th class & domain = software- development than you have to show both part like you also show that you can do 12th and after that b.tech and also show that you can do diploma or certifications."
             }
 
             Do not add any text outside of this JSON object.

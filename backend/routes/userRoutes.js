@@ -6,7 +6,7 @@ import {ApiError} from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { loginUser, logoutUser, registerUser } from '../controllers/authController.js';
 import verifyJWT from '../middleware/authMiddleware.js';
-
+import { registerCounselor } from '../controllers/authController.js';
 const router = express.Router();
 
 // Helper function to generate a JWT
@@ -25,6 +25,7 @@ const router = express.Router();
  * @desc    Register a new user
  */
 router.post('/register', registerUser)
+router.post('/registerCounselor', registerCounselor);
 
 //   const {accessToken,refreshToken}= await generateAccessAndRefereshTokens(user._id)
 
@@ -78,5 +79,31 @@ router.post('/login',loginUser)
 
 router.post('/logout', verifyJWT, logoutUser);
 
+router.post('/select-role',verifyJWT, async (req, res) => {
+  try {
+    const { role } = req.body;
+    const userId = req.user._id;
+
+    // Validate role
+    if (!['student', 'parent', 'counselor'].includes(role)) {
+      return res.status(400).json({ error: 'Invalid role selected' });
+    }
+
+    // Update user role
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { role },
+      { new: true }
+    ).select('-password'); // exclude password
+
+    res.json({
+      message: `Role updated successfully to ${role}`,
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Error in /api/user/select-role:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
 
 export default router;

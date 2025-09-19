@@ -15,6 +15,7 @@ import userRoutes from './routes/userRoutes.js';
 import interviewRoutes from './routes/interviewRoutes.js'
 import { ApiError } from './utils/ApiError.js';
 dotenv.config();
+import appointmentRoutes from './routes/appointmentRoutes.js';
 
 connectDB();
 
@@ -105,6 +106,7 @@ export default main;
 
 app.use('/api/users', userRoutes);
 app.use('/api/interviews', interviewRoutes);
+app.use('/api/appointments', appointmentRoutes);
 
 const port = process.env.PORT || 5001;
 

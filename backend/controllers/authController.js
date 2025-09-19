@@ -8,7 +8,7 @@ import { asyncHandler } from '../utils/asyncHandler.js'
 import {ApiError} from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-
+import { Counselor } from '../models/Counselor.model.js';
 const generateAccessAndRefereshTokens = async(userId) =>{
     try{
         const user = await User.findById(userId)    
@@ -25,11 +25,6 @@ const generateAccessAndRefereshTokens = async(userId) =>{
         throw new ApiError(500, "something went wrong while generating access token & refresh token",error) 
     }
 }
-
-
-
-
-
 
 export const registerUser = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
@@ -122,7 +117,33 @@ export const loginUser = asyncHandler(async (req, res) => {
 });
 
 
+ export const registerCounselor = asyncHandler(async (req, res) => {
+  const { name, email, password, role, specializations, bio, availability } = req.body;
+        if([name,email, password ].some((field)=>
+    field?.trim() === "")) {
+        throw new ApiError(400, "all fields are required")
+    }
+    let existedUser = await User.findOne({ email });
+    if(existedUser){
+        throw new ApiError(409, " user with this email or userName  already exists")
+    }
 
+  const user = await User.create({ name, email, password, role: "counselor" });
+  const createdUser = await User.findById(user._id).select("-password -refreshToken")
+
+      if(!createdUser){
+        throw new ApiError(500, "something went wrong while registering user")
+      }
+
+  const counselor = await Counselor.create({
+    user: user._id,
+    specializations,
+    bio,
+    availability
+  });
+
+  res.status(201).json(new ApiResponse(201, { user, counselor }, "Counselor registered successfully"));
+});
 
 export const logoutUser = asyncHandler(async (req, res) => {
     // Update refresh token to undefined in the database

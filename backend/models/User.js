@@ -21,6 +21,11 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+   role: {
+    type: String,
+    enum: ['student', 'parent', 'counselor'],
+    default: 'student',
+  },
 }, {
   timestamps: true, // Adds createdAt and updatedAt fields
 });
