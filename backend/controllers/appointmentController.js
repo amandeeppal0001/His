@@ -58,18 +58,54 @@ export const getAvailableSlots = asyncHandler(async (req, res) => {
     const [endHour, endMinute] = availability.endTime.split(':').map(Number);
     
     let currentTime = new Date(requestedDate);
-    currentTime.setUTCHours(startHour, startMinute, 0, 0);
+    currentTime.setHours(startHour, startMinute, 0, 0);
 
     let endTime = new Date(requestedDate);
-    endTime.setUTCHours(endHour, endMinute, 0, 0);
+    endTime.setHours(endHour, endMinute, 0, 0);
 
     while (currentTime < endTime) {
-        if (!bookedTimes.has(currentTime.toISOString())) {
-            availableSlots.push(new Date(currentTime));
-        }
+        // if (!bookedTimes.has(currentTime.toISOString())) {
+        //     availableSlots.push(new Date(currentTime));
+        // }
+
+         const slotEnd = new Date(currentTime.getTime() + slotDuration * 60000);
+const isOverlapping = existingAppointments.some(app => {
+  return (
+    (currentTime >= app.appointmentTime && currentTime < app.endTime) ||
+    (slotEnd > app.appointmentTime && slotEnd <= app.endTime)
+  );
+});
+
+if (!isOverlapping) {
+  availableSlots.push(new Date(currentTime));
+}
+
         currentTime.setMinutes(currentTime.getMinutes() + slotDuration);
     }
     }
+    // --- right after availableSlots is built ---
+availableSlots.sort((a,b) => a - b); // optional: ensure sorted
+
+const timezone = 'Asia/Kolkata'; // change to whichever timezone you want
+const formattedSlots = availableSlots.map(slot => {
+  // get parts using Intl so we can build a clean YYYY-MM-DDTHH:mm string
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: timezone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false
+  }).formatToParts(slot);
+
+  const map = {};
+  for (const { type, value } of parts) {
+    map[type] = value;
+  }
+
+  // format: 2025-09-20T18:00
+  return `${map.year}-${map.month}-${map.day}T${map.hour}:${map.minute}`;
+});
+
+res.status(200).json(new ApiResponse(200, formattedSlots, "Available slots fetched successfully."));
+
     // const [startHour, startMinute] = dayAvailability.startTime.split(':').map(Number);
     // const [endHour, endMinute] = dayAvailability.endTime.split(':').map(Number);
     
@@ -88,12 +124,12 @@ export const getAvailableSlots = asyncHandler(async (req, res) => {
 
 
     
-    res.status(200).json(new ApiResponse(200, availableSlots, "Available slots fetched successfully."));
+    // res.status(200).json(new ApiResponse(200, availableSlots, "Available slots fetched successfully."));
 });
 
 export const getAllCounselor = asyncHandler(async (req, res) => {
     const counselors = await Counselor.find().sort({ createdAt: -1 });
-    res.status(200).json(new ApiResponse(200, counselors, "Resources fetched successfully."));
+    res.status(200).json(new ApiResponse(200, counselors, "All counselors fetched successfully."));
 });
 /**
  * @desc    Book an appointment with a counselor
@@ -239,7 +275,22 @@ export const getMyAppointments = asyncHandler(async (req, res) => {
         })
         .sort({ appointmentTime: -1 });
 
-    res.status(200).json(new ApiResponse(200, appointments, "Student's appointments fetched successfully."));
+        
+  // Format dates into Asia/Kolkata
+  const timezone = "Asia/Kolkata";
+  const formattedAppointments = appointments.map(app => ({
+    ...app.toObject(),
+    appointmentTime: moment(app.appointmentTime).tz(timezone).format("YYYY-MM-DDTHH:mm"),
+    endTime: moment(app.endTime).tz(timezone).format("YYYY-MM-DDTHH:mm"),
+    createdAt: moment(app.createdAt).tz(timezone).format("YYYY-MM-DD HH:mm"),
+    updatedAt: moment(app.updatedAt).tz(timezone).format("YYYY-MM-DD HH:mm"),
+  }));
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, formattedAppointments, "Student's appointments fetched successfully."));
+
+    // res.status(200).json(new ApiResponse(200, appointments, "Student's appointments fetched successfully."));
 });
 
 /**
@@ -291,7 +342,20 @@ export const getCounselorAppointments = asyncHandler(async (req, res) => {
         .populate('student', 'name email')
         .sort({ appointmentTime: -1 });
 
-    res.status(200).json(new ApiResponse(200, appointments, "Counselor's appointments fetched successfully."));
+const timezone = "Asia/Kolkata";
+  const formattedAppointments = appointments.map(app => ({
+    ...app.toObject(),
+    appointmentTime: moment(app.appointmentTime).tz(timezone).format("YYYY-MM-DDTHH:mm"),
+    endTime: moment(app.endTime).tz(timezone).format("YYYY-MM-DDTHH:mm"),
+    createdAt: moment(app.createdAt).tz(timezone).format("YYYY-MM-DD HH:mm"),
+    updatedAt: moment(app.updatedAt).tz(timezone).format("YYYY-MM-DD HH:mm"),
+  }));
+
+  res
+    .status(200)
+    .json(new ApiResponse(200, formattedAppointments, "Student's appointments fetched successfully."));
+
+    // res.status(200).json(new ApiResponse(200, appointments, "Counselor's appointments fetched successfully."));
 });
 
 /**
@@ -328,5 +392,17 @@ export const updateAppointmentStatus = asyncHandler(async (req, res) => {
     }
     await appointment.save();
     
-    res.status(200).json(new ApiResponse(200, appointment, "Appointment status updated successfully."));
+
+    const timezone = "Asia/Kolkata";
+    const formattedAppointment = {
+        ...appointment.toObject(),
+        appointmentTime: moment(appointment.appointmentTime).tz(timezone).format("YYYY-MM-DDTHH:mm"),
+        endTime: moment(appointment.endTime).tz(timezone).format("YYYY-MM-DDTHH:mm"),
+        createdAt: moment(appointment.createdAt).tz(timezone).format("YYYY-MM-DD HH:mm"),
+        updatedAt: moment(appointment.updatedAt).tz(timezone).format("YYYY-MM-DD HH:mm"),
+    };
+
+    res.status(200).json(new ApiResponse(200, formattedAppointment, "Appointment status updated successfully."));
+    
+    // res.status(200).json(new ApiResponse(200, appointment, "Appointment status updated successfully."));
 });
