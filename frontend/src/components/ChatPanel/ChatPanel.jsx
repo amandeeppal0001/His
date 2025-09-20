@@ -17,39 +17,27 @@ function ChatPanel() {
     const startData = location.state?.interviewData;
     console.log("StartData received:", startData);
     
-    if (startData && startData.sessionId) {
-      let questionData = null;
+    if (startData && startData.sessionId && startData.question && startData.options) {
+      console.log("Question:", startData.question);
+      console.log("Options:", startData.options);
       
-      // Parse the question string that comes from backend
-      if (startData.question) {
-        try {
-          // The backend sends the AI response as a string, so we need to parse it
-          questionData = JSON.parse(startData.question);
-          console.log("Parsed question data:", questionData);
-        } catch (error) {
-          console.error("Error parsing question JSON:", error);
-          console.log("Raw question data:", startData.question);
-          navigate("/select");
-          return;
-        }
-      }
+      // Create initial message with the question and options
+      const initialMessage = {
+        sender: "bot",
+        text: startData.question,
+        options: startData.options,
+        type: "mcq"
+      };
       
-      if (questionData && questionData.question && questionData.options) {
-        const initialMessage = {
-          sender: "bot",
-          text: questionData.question,
-          options: questionData.options,
-          type: "mcq"
-        };
-        
-        setMessages([initialMessage]);
-        setSessionId(startData.sessionId);
-      } else {
-        console.error("Invalid question format:", questionData);
-        navigate("/select");
-      }
+      setMessages([initialMessage]);
+      setSessionId(startData.sessionId);
     } else {
       console.error("No career guidance data found. Redirecting...");
+      console.error("Missing data:", { 
+        hasSessionId: !!startData?.sessionId, 
+        hasQuestion: !!startData?.question, 
+        hasOptions: !!startData?.options 
+      });
       navigate("/select");
     }
   }, [location.state, navigate]);
@@ -85,43 +73,56 @@ function ChatPanel() {
 
       if (!response.ok) throw new Error("Failed to get evaluation.");
       const result = await response.json();
-      
-      console.log("Backend response:", result);
 
-      // Handle the nextQuestion response
-      let newBotMessage = {
-        sender: "bot",
-        feedback: result.feedback,
-        score: result.score,
-        type: "text"
-      };
+      // Handle the response - check if it's an object or needs parsing
+      let questionText = "";
+      let questionOptions = [];
+      let messageType = "text";
 
       if (result.nextQuestion) {
-        try {
-          // Try to parse nextQuestion as JSON (for MCQ format)
-          const questionData = JSON.parse(result.nextQuestion);
-          
-          if (questionData.question && questionData.options) {
-            // It's an MCQ format
-            newBotMessage.text = questionData.question;
-            newBotMessage.options = questionData.options;
-            newBotMessage.type = "mcq";
-          } else {
-            // It's a JSON but not in expected format
-            newBotMessage.text = result.nextQuestion;
-          }
-        } catch (error) {
-          // If parsing fails, treat as regular text
-          newBotMessage.text = result.nextQuestion;
-          newBotMessage.type = "text";
+        // If nextQuestion is already an object (updated backend)
+        if (typeof result.nextQuestion === 'object' && result.nextQuestion.question) {
+          questionText = result.nextQuestion.question;
+          questionOptions = result.nextQuestion.options || [];
+          messageType = "mcq";
         }
-      } else {
-        // No next question (end of assessment)
-        newBotMessage.text = "Assessment completed! Click 'Complete Career Assessment' to see your results.";
+        // If nextQuestion is a clean JSON string
+        else if (typeof result.nextQuestion === 'string') {
+          try {
+            // Clean any potential markdown formatting
+            let cleanedResponse = result.nextQuestion.trim();
+            if (cleanedResponse.startsWith('```json')) {
+              cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+            } else if (cleanedResponse.startsWith('```')) {
+              cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+            }
+            
+            const parsedQuestion = JSON.parse(cleanedResponse);
+            if (parsedQuestion.question && parsedQuestion.options) {
+              questionText = parsedQuestion.question;
+              questionOptions = parsedQuestion.options;
+              messageType = "mcq";
+            } else {
+              questionText = result.nextQuestion;
+            }
+          } catch (error) {
+            // If parsing fails, treat as regular text
+            questionText = result.nextQuestion;
+            console.log("Next question is regular text, not JSON");
+          }
+        }
       }
 
+      const newBotMessage = {
+        sender: "bot",
+        text: questionText,
+        feedback: result.feedback,
+        score: result.score,
+        options: questionOptions,
+        type: messageType,
+      };
+
       setMessages((prev) => [...prev, newBotMessage]);
-      
     } catch (error) {
       console.error("Error during evaluation:", error);
       setMessages((prev) => [

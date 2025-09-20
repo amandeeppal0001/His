@@ -75,7 +75,8 @@ Example of correct format:
         await newSession.save();
 
         res.json({ 
-            question: questionData, // Send the parsed object directly
+            question: questionData.question,
+            options:questionData.options, // Send the parsed object directly
             sessionId: newSession._id, 
             location: newSession.location
         });
