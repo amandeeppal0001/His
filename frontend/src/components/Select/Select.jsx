@@ -88,11 +88,11 @@ console.log("Selected Data:", formData);
         >
           <div className="flex flex-col  gap-10 w-full">
             <div className="flex flex-col form-group"> 
-            <label htmlFor="role" className="font-bold">Role</label>
+            <label htmlFor="role" className="font-bold"> highest completed qualification </label>
             <input
             id="role"
               type="text"
-              placeholder="Role (e.g., Software Engineer)"
+              placeholder=" (e.g., 10th, 12th, Graduate, Post Graduate)"
               value={formData.role}
               onChange={(e) => setFormData({ ...formData, role: e.target.value })}
               className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -100,11 +100,11 @@ console.log("Selected Data:", formData);
             />
             </div>
            < div className="flex flex-col form-group"> 
-            <label htmlFor="domain" className="font-bold">Domain</label>
+            <label htmlFor="domain" className="font-bold">Domain(In which you are interested)</label>
             <input
             id="domain"
               type="text"
-              placeholder="Domain (e.g., Web Development)"
+              placeholder="Domain (e.g., Web Development,Chartered Accountant, Civil Servent)"
               value={formData.domain}
               onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
               className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
