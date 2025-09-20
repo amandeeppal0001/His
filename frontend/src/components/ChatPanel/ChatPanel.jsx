@@ -18,45 +18,34 @@ function ChatPanel() {
     console.log("StartData received:", startData);
     
     if (startData && startData.sessionId) {
-      let questionText = "";
-      let questionOptions = [];
+      let questionData = null;
       
-      // Handle different possible data structures
+      // Parse the question string that comes from backend
       if (startData.question) {
         try {
-          // If question is a JSON string, parse it
-          if (typeof startData.question === 'string') {
-            const parsedQuestion = JSON.parse(startData.question);
-            questionText = parsedQuestion.question;
-            questionOptions = parsedQuestion.options || [];
-          }
-          // If question is already an object
-          else if (typeof startData.question === 'object') {
-            questionText = startData.question.question;
-            questionOptions = startData.question.options || [];
-          }
+          // The backend sends the AI response as a string, so we need to parse it
+          questionData = JSON.parse(startData.question);
+          console.log("Parsed question data:", questionData);
         } catch (error) {
-          // If JSON parsing fails, treat as plain string
-          questionText = startData.question;
           console.error("Error parsing question JSON:", error);
+          console.log("Raw question data:", startData.question);
+          navigate("/select");
+          return;
         }
       }
       
-      console.log("Parsed question:", questionText);
-      console.log("Parsed options:", questionOptions);
-      
-      if (questionText) {
+      if (questionData && questionData.question && questionData.options) {
         const initialMessage = {
           sender: "bot",
-          text: questionText,
-          options: questionOptions,
+          text: questionData.question,
+          options: questionData.options,
           type: "mcq"
         };
         
         setMessages([initialMessage]);
         setSessionId(startData.sessionId);
       } else {
-        console.error("Could not parse question data:", startData.question);
+        console.error("Invalid question format:", questionData);
         navigate("/select");
       }
     } else {
@@ -96,43 +85,43 @@ function ChatPanel() {
 
       if (!response.ok) throw new Error("Failed to get evaluation.");
       const result = await response.json();
-
-      // Handle the response which may contain question and options together
-      let questionText = result.nextQuestion;
-      let questionOptions = [];
-      let messageType = "text";
       
-      // If nextQuestion is a JSON string, parse it
-      if (typeof result.nextQuestion === 'string') {
+      console.log("Backend response:", result);
+
+      // Handle the nextQuestion response
+      let newBotMessage = {
+        sender: "bot",
+        feedback: result.feedback,
+        score: result.score,
+        type: "text"
+      };
+
+      if (result.nextQuestion) {
         try {
-          const parsedQuestion = JSON.parse(result.nextQuestion);
-          if (parsedQuestion.question && parsedQuestion.options) {
-            questionText = parsedQuestion.question;
-            questionOptions = parsedQuestion.options;
-            messageType = "mcq";
+          // Try to parse nextQuestion as JSON (for MCQ format)
+          const questionData = JSON.parse(result.nextQuestion);
+          
+          if (questionData.question && questionData.options) {
+            // It's an MCQ format
+            newBotMessage.text = questionData.question;
+            newBotMessage.options = questionData.options;
+            newBotMessage.type = "mcq";
+          } else {
+            // It's a JSON but not in expected format
+            newBotMessage.text = result.nextQuestion;
           }
         } catch (error) {
           // If parsing fails, treat as regular text
-          console.log("Next question is regular text, not JSON");
+          newBotMessage.text = result.nextQuestion;
+          newBotMessage.type = "text";
         }
+      } else {
+        // No next question (end of assessment)
+        newBotMessage.text = "Assessment completed! Click 'Complete Career Assessment' to see your results.";
       }
-      // If nextQuestion is already an object
-      else if (typeof result.nextQuestion === 'object' && result.nextQuestion.question) {
-        questionText = result.nextQuestion.question;
-        questionOptions = result.nextQuestion.options || [];
-        messageType = "mcq";
-      }
-
-      const newBotMessage = {
-        sender: "bot",
-        text: questionText,
-        feedback: result.feedback,
-        score: result.score,
-        options: questionOptions,
-        type: messageType,
-      };
 
       setMessages((prev) => [...prev, newBotMessage]);
+      
     } catch (error) {
       console.error("Error during evaluation:", error);
       setMessages((prev) => [

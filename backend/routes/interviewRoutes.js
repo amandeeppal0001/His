@@ -18,44 +18,135 @@ router.use(verifyJWT);
  */
 router.post('/start', async (req, res) => {
     try {
-  const { role, domain, interviewMode,location } = req.body;
-  
-  // The user ID is available from the 'protect' middleware
-  const userId = req.user._id; 
-// role == class or completed education
-// domain == field of interest in which they want to pursue career
-// interviewMode == easy, medium, hard
-  const prompt = ` You are an expert career counselor for students who have just completed their ${role} studies (e.g., 10th or 12th grade), specializing in career guidance for the ${domain} field.
-  Your task is to present the user with a multiple-choice question to assess their interests, skills, or aptitude. The difficulty should be set to ${interviewMode}.
-  
-  Your tone should be professional, friendly, and encouraging.
-  {
-    "question": "The question to ask the user.",
-    "options": ["Option A", "Option B", "Option C", "Option D"]
-  }
-  
-  // Do not add any other text outside of the JSON object.
-`;
-  const firstQuestionText = await main(prompt); // Replace with await callGemini(prompt);
+        const { role, domain, interviewMode, location } = req.body;
+        
+        // The user ID is available from the 'protect' middleware
+        const userId = req.user._id; 
+        
+        const prompt = `You are an expert career counselor for students who have just completed their ${role} studies (e.g., 10th , 12th grade, or graduation  ), specializing in career guidance for the ${domain} field.
+Your task is to present the user with a multiple-choice question to assess their interests, skills, or aptitude. The difficulty should be set to ${interviewMode}.
 
-  const newSession = new InterviewSession({
-    user: userId, // Link the session to the logged-in user
-    role,
-    domain,
-    interviewMode,
-    location,
-    history: [{ sender: 'ai', text: firstQuestionText }]
-  });
-  await newSession.save();
+CRITICAL INSTRUCTIONS:
+- Respond ONLY with a valid JSON object
+- Do NOT use markdown formatting or code blocks
+- Do NOT add any text before or after the JSON
+- Do NOT use backticks or any other formatting
 
-  res.json({ 
-    question: firstQuestionText, sessionId: newSession._id, location: newSession.location
- });
- } catch (error) {
-    console.error('Error in /api/interviews/start:', error);
-    res.status(500).json({ error: error.message });
-  }
+Your response must be exactly in this format:
+{"question": "Your question here", "options": ["Option A", "Option B", "Option C", "Option D"]}
+
+Example of correct format:
+{"question": "What interests you most about technology?", "options": ["Creating websites and apps", "Analyzing data and solving problems", "Designing user interfaces", "Managing tech projects"]}`;
+
+        const firstQuestionText = await main(prompt);
+        
+        // Clean the response to remove any markdown formatting
+        let cleanedResponse = firstQuestionText.trim();
+        
+        // Remove markdown code blocks if they exist
+        if (cleanedResponse.startsWith('```json')) {
+            cleanedResponse = cleanedResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        } else if (cleanedResponse.startsWith('```')) {
+            cleanedResponse = cleanedResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        }
+        
+        // Validate that it's proper JSON
+        let questionData;
+        try {
+            questionData = JSON.parse(cleanedResponse);
+        } catch (parseError) {
+            console.error('Failed to parse AI response as JSON:', cleanedResponse);
+            throw new Error('AI response is not valid JSON format');
+        }
+        
+        // Validate the structure
+        if (!questionData.question || !questionData.options || !Array.isArray(questionData.options)) {
+            throw new Error('AI response does not have required question and options structure');
+        }
+
+        const newSession = new InterviewSession({
+            user: userId,
+            role,
+            domain,
+            interviewMode,
+            location,
+            history: [{ sender: 'ai', text: cleanedResponse }]
+        });
+        await newSession.save();
+
+        res.json({ 
+            question: questionData, // Send the parsed object directly
+            sessionId: newSession._id, 
+            location: newSession.location
+        });
+        
+    } catch (error) {
+        console.error('Error in /api/interviews/start:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// router.post('/start', async (req, res) => {
+//     try {
+//   const { role, domain, interviewMode,location } = req.body;
+  
+//   // The user ID is available from the 'protect' middleware
+//   const userId = req.user._id; 
+// // role == class or completed education
+// // domain == field of interest in which they want to pursue career
+// // interviewMode == easy, medium, hard
+//   const prompt = ` You are an expert career counselor for students who have just completed their ${role} studies (e.g., 10th or 12th grade), specializing in career guidance for the ${domain} field.
+//   Your task is to present the user with a multiple-choice question to assess their interests, skills, or aptitude. The difficulty should be set to ${interviewMode}.
+  
+//   You MUST provide your response as a valid JSON object with the following structure:
+//   {
+//     "question": "The question to ask the user.",
+//     "options": ["Option A", "Option B", "Option C", "Option D"]
+//   }
+  
+//   Do not add any other text outside of the JSON object.
+// `;
+//   const firstQuestionText = await main(prompt); // Replace with await callGemini(prompt);
+
+//   const newSession = new InterviewSession({
+//     user: userId, // Link the session to the logged-in user
+//     role,
+//     domain,
+//     interviewMode,
+//     location,
+//     history: [{ sender: 'ai', text: firstQuestionText }]
+//   });
+//   await newSession.save();
+
+//   res.json({ 
+//     question: firstQuestionText,  sessionId: newSession._id, location: newSession.location
+//  });
+//  } catch (error) {
+//     console.error('Error in /api/interviews/start:', error);
+//     res.status(500).json({ error: error.message });
+//   }
+// });
 
 
 /**
